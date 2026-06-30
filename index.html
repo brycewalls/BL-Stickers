@@ -896,10 +896,25 @@ async function copyToClipboard(blob){
     try{
       await navigator.clipboard.write([new ClipboardItem({'image/png':Promise.resolve(blob)})]);
       return 'copied';
-    }catch(e){}
+    }catch(e){
+      console.log('Clipboard API failed, trying data URL');
+    }
   }
-  showLightbox(blob);
-  return 'lightbox';
+  const reader=new FileReader();
+  return new Promise(resolve=>{
+    reader.onload=async()=>{
+      try{
+        const dataUrl=reader.result;
+        const html=`<img src="${dataUrl}">`;
+        await navigator.clipboard.write([new ClipboardItem({'text/html':Promise.resolve(new Blob([html],{type:'text/html'}))})]);
+        resolve('copied');
+      }catch(e){
+        showLightbox(blob);
+        resolve('lightbox');
+      }
+    };
+    reader.readAsDataURL(blob);
+  });
 }
 
 function triggerDownload(blob,name){
