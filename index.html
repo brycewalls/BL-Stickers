@@ -311,8 +311,9 @@
 
 <div class="lb-scrim" id="lbScrim" role="dialog" aria-modal="true">
   <img class="lb-img" id="lbImg" alt="sticker preview" />
-  <p class="lb-hint"><b>Long-press</b> the image to Copy &rarr; paste straight into your Story.<br>Or tap Download to save to your camera roll.</p>
+  <p class="lb-hint">Tap <b>Copy</b> to paste straight into your Story.<br>Or tap Download to save to your camera roll.</p>
   <div class="lb-row">
+    <button class="lb-btn lb-dl" id="lbCopy">📋&nbsp;Copy</button>
     <button class="lb-btn lb-dl" id="lbDl">&#8595;&nbsp;Download</button>
     <button class="lb-btn lb-close" id="lbClose">Done</button>
   </div>
@@ -961,8 +962,10 @@ function ingestSvg(text,filename){
 /* ---------- lightbox (copy fallback for mobile) ---------- */
 const lbScrim=document.getElementById('lbScrim');
 const lbImg=document.getElementById('lbImg');
+let _lbBlob=null;
 let _lbUrl='';
 function showLightbox(blob){
+  _lbBlob=blob;
   if(_lbUrl) URL.revokeObjectURL(_lbUrl);
   _lbUrl=URL.createObjectURL(blob);
   lbImg.src=_lbUrl;
@@ -974,12 +977,21 @@ function closeLightbox(){
 }
 document.getElementById('lbClose').addEventListener('click',closeLightbox);
 lbScrim.addEventListener('click',e=>{ if(e.target===lbScrim) closeLightbox(); });
+document.getElementById('lbCopy').addEventListener('click',async()=>{
+  if(!_lbBlob||!window.ClipboardItem||!navigator.clipboard||!navigator.clipboard.write) return;
+  try{
+    await navigator.clipboard.write([new ClipboardItem({'image/png':Promise.resolve(_lbBlob)})]);
+    showToast('copied');
+    closeLightbox();
+  }catch(e){ showToast('error'); }
+});
 document.getElementById('lbDl').addEventListener('click',()=>{
   if(!_lbUrl) return;
   const a=document.createElement('a'); a.href=_lbUrl; a.download='bricklink-sticker.png';
   document.body.appendChild(a); a.click(); a.remove();
   showToast('downloaded');
 });
+lbImg.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && lbScrim.classList.contains('open')) closeLightbox(); });
 
 function preloadFonts(){
