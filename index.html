@@ -891,7 +891,8 @@ async function exportSticker(s,targetMax=1080){
 
 /* ── Clipboard write + lightbox fallback ── */
 async function copyToClipboard(blob){
-  if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
+  const isMobile=/iPhone|iPad|Android|Mobile/.test(navigator.userAgent);
+  if(!isMobile&&window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
     try{
       await navigator.clipboard.write([new ClipboardItem({'image/png':Promise.resolve(blob)})]);
       return 'copied';
